@@ -94,7 +94,7 @@ async def dispatcher_startup():
 
 
 def _setup_dispatcher(dispatcher: Dispatcher):
-    dispatcher.include_routers(handlers.task.router)
+    dispatcher.include_routers(handlers.support.router)
     setup_di(dispatcher)
 
 

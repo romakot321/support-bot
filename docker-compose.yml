@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: ./
-    container_name: template_app
+    container_name: photobooth_supportbot_app
     depends_on:
       - postgres
     env_file:
@@ -16,7 +16,7 @@ services:
 
   postgres:
     image: postgres:latest
-    container_name: template_db
+    container_name: photobooth_supportbot_db
     restart: always
     env_file:
       - .env

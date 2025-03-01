@@ -5,8 +5,9 @@ from pydantic import Field, AliasChoices
 
 
 class Action(Enum):
-    task_reload = dict(action_name='task_reload', screen_name='Обновить')
-    task_start = dict(action_name='task_start', screen_name=None)
+    support_category = dict(action_name='support_category', screen_name=None)
+    support_done = dict(action_name='support_done', screen_name=None)
+    support_invalid = dict(action_name='support_invalid', screen_name=None)
 
     def __init__(self, values):
         self.action_name = values.get('action_name')
@@ -36,6 +37,13 @@ class PaginatedActionCallback(ActionCallback, prefix='paginated_action'):
     page: int = 0
 
 
-class TaskActionCallback(PaginatedActionCallback, prefix='task_action'):
-    task_id: int = Field(validation_alias=AliasChoices('id', 'task_id'))
+class SupportCategory(Enum):
+    subscription_cancel = "subscription_cancel"
+    technical_issues = "technical_issues"
+    generation_quality = "generation_quality"
+    other = "other"
+
+
+class SupportActionCallback(PaginatedActionCallback, prefix='support_action'):
+    category: SupportCategory
 

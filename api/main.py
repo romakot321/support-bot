@@ -11,7 +11,9 @@ import asyncio
 
 from app.main import setup_bot
 
-from db.admin import attach_admin_panel
+# from db.admin import attach_admin_panel
+def attach_admin_panel(*args):
+    pass
 
 
 class ProjectSettings(BaseSettings):

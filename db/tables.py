@@ -4,10 +4,11 @@ from sqlalchemy.orm import mapped_column as column
 from sqlalchemy_service import Base
 
 
-class Task(Base):
-    __tablename__ = "tasks"
+class User(Base):
+    __tablename__ = "users"
 
     id: M[int] = column(primary_key=True)
-    user_id: M[int] = column(type_=BIGINT)
-    message_id: M[int | None]
+    telegram_id: M[int] = column(type_=BIGINT)
+    crm_id: M[int | None]
+    crm_last_lead_id: M[int | None]
 
