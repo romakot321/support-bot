@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: ./
+    container_name: template_app
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    restart: always
+    networks:
+      global_network:
+      default:
+
+  postgres:
+    image: postgres:latest
+    container_name: template_db
+    restart: always
+    env_file:
+      - .env
+    networks:
+      default:
+
+networks:
+  global_network:
+    external: true
