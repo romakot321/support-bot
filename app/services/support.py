@@ -13,22 +13,26 @@ from app.schemas.message import TextMessage
 from app.services.utils import build_aiogram_method
 from app.repositories.crm import CRMRepository, CRMStatusId
 from app.repositories.user import UserRepository
+from app.repositories.llm import LLMRepository
 
 
 class SupportService:
     def __init__(
             self,
             user_repository: Annotated[UserRepository, Depends(UserRepository.init)],
-            crm_repository: CRMRepository
+            crm_repository: CRMRepository,
+            llm_repository: LLMRepository
     ):
         self.user_repository = user_repository
         self.crm_repository = crm_repository
+        self.llm_repository = llm_repository
 
     @classmethod
     def init(cls, user_repository: Annotated[UserRepository, Depends(UserRepository.init)]):
         return cls(
             user_repository=user_repository,
-            crm_repository=CRMRepository()
+            crm_repository=CRMRepository(),
+            llm_repository=LLMRepository()
         )
 
     @classmethod
@@ -95,8 +99,9 @@ class SupportService:
         user = await self.user_repository.get_by_telegram_id(msg.from_user.id)
         if user.crm_last_lead_id is None:
             return
+        text = await self.llm_repository.generate(msg.text)
         message = TextMessage(
-            text="Ответ ИИ",
+            text=text,
             reply_markup=self._build_answer_like_markup(),
         )
         return build_aiogram_method(msg.from_user.id, message)
