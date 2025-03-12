@@ -5,9 +5,17 @@ from pydantic import Field, AliasChoices
 
 
 class Action(Enum):
-    support_category = dict(action_name='support_category', screen_name=None)
+    support_menu = dict(action_name='support_menu', screen_name="В меню")
+    payment_trable_category = dict(action_name="payment_trable_category", screen_name="Проблемы с оплатой")
+    picture_quality_category = dict(action_name="picture_quality_category", screen_name="Качество фото")
+    other_category = dict(action_name="other_category", screen_name="Другое")
+    subscribtion_category = dict(action_name="subscribtion_category", screen_name="Управление подпиской")
+    subscription_cancel_confirmation = dict(action_name="subscription_cancel_confirmation", screen_name="Отмена подписки")
+    subscription_help = dict(action_name="subscription_help", screen_name="Помощь с подпиской")
+    start_chat = dict(action_name="start_chat", screen_name="Оператор")
     support_done = dict(action_name='support_done', screen_name=None)
     support_invalid = dict(action_name='support_invalid', screen_name=None)
+    crm_message = dict(action_name="crm_message", screen_name=None)
 
     def __init__(self, values):
         self.action_name = values.get('action_name')
@@ -46,4 +54,8 @@ class SupportCategory(Enum):
 
 class SupportActionCallback(PaginatedActionCallback, prefix='support_action'):
     category: SupportCategory
+
+
+class ExternalActionCallback(PaginatedActionCallback, prefix='support_webhook'):
+    chat_id: str  # conversation_id from AmoCRM
 

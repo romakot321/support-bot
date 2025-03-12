@@ -75,9 +75,9 @@ def init_web_application():
         register_exception(application)
         register_cors(application)
 
-    from api.routes.task import router as task_router
+    from api.routes.external import router as external_router
 
-    application.include_router(task_router)
+    application.include_router(external_router)
 
     attach_admin_panel(application)
 
@@ -85,6 +85,7 @@ def init_web_application():
 
 
 def run() -> FastAPI:
+    logger.disable("sqlalchemy_service")
     application = init_web_application()
     return application
 

@@ -19,6 +19,10 @@ class UserRepository[Table: User, int](BaseRepository):
         query = select(self.base_table).filter_by(telegram_id=telegram_id)
         return await self.session.scalar(query)
 
+    async def get_by_chat_id(self, chat_id: int) -> User | None:
+        query = select(self.base_table).filter_by(current_chat_id=chat_id)
+        return await self.session.scalar(query)
+
     async def update(self, model_id: int, **fields) -> User:
         return await self._update(model_id, **fields)
 

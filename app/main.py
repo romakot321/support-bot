@@ -95,6 +95,11 @@ async def dispatcher_startup():
 
 def _setup_dispatcher(dispatcher: Dispatcher):
     dispatcher.include_routers(handlers.support.router)
+    dispatcher.include_routers(handlers.support_payment.router)
+    dispatcher.include_routers(handlers.support_picture.router)
+    dispatcher.include_routers(handlers.support_other.router)
+    dispatcher.include_routers(handlers.support_subscription.router)
+    dispatcher.include_routers(handlers.external.router)
     setup_di(dispatcher)
 
 
