@@ -94,8 +94,23 @@ class SubscriptionCategoryService:
         )
         return build_aiogram_method(msg.from_user.id, message)
 
+    @classmethod
+    def _build_cancel_keyboard(cls) -> types.InlineKeyboardMarkup:
+        builder = InlineKeyboardBuilder()
+        builder.button(
+            text="Назад",
+            callback_data=ActionCallback(action=Action.support_menu.action_name)
+        )
+        builder.button(
+            text=Action.start_chat.screen_name,
+            callback_data=ActionCallback(action=Action.start_chat.action_name)
+        )
+        builder.adjust(1)
+        return builder.as_markup()
+
     async def handle_subscription_cancel_confirmation(self, query: CallbackQuery):
         message = TextMessage(
-            text=subscription_cancel_confirmation_text
+            text=subscription_cancel_confirmation_text,
+            parse_mode="MarkdownV2"
         )
 

@@ -26,4 +26,5 @@ async def message_callback(
     external_service: Annotated[ExternalService, Depends(ExternalService.init)],
 ):
     method = await external_service.handle_message(callback_query, callback_data)
-    await bot(method)
+    if method:
+        await bot(method)

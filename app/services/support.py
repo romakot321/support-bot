@@ -102,13 +102,14 @@ class SupportService:
         )
         return build_aiogram_method(msg.from_user.id, message, use_edit=isinstance(msg, CallbackQuery))
 
-    async def handle_chat_start(self, query: CallbackQuery):
+    async def handle_chat_start(self, query: CallbackQuery, callback_data: SupportActionCallback):
         user = await self.user_repository.get_by_telegram_id(query.from_user.id)
         chat_id = str(uuid4())
-        await self.user_repository.update(user.id, current_chat_id=chat_id)
-        chat = await self.crm_repository.create_chat(chat_id, str(user.crm_id), query.from_user.full_name)
+        lead = await self.crm_repository.add_lead(user.crm_id, getattr(CRMStatusId, SupportActionCallback.category.value))
+        chat = await self.crm_repository.create_chat(chat_id, str(user.crm_id), str(user.id), query.from_user.full_name)
         logger.debug(f"Created {chat=}")
         await self.crm_repository.attach_chat_contact(chat["id"], user.crm_id)
+        await self.user_repository.update(user.id, current_chat_id=chat_id, current_chat_ref_id=chat["id"])
 
         message = TextMessage(
             text=chat_started_text,
@@ -121,7 +122,7 @@ class SupportService:
         user = await self.user_repository.get_by_telegram_id(message.from_user.id)
         if user is None or user.current_chat_id is None:
             return
-        await self.crm_repository.user_send_message(user.current_chat_id, str(user.crm_id), message.from_user.full_name, message.text)
+        await self.crm_repository.user_send_message(user.current_chat_id, user.current_chat_ref_id, str(user.crm_id), message.from_user.full_name, message.text)
 
     async def handle_subcribe_category_choosed(self, query: CallbackQuery):
         message = TextMessage(

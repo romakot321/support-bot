@@ -13,7 +13,6 @@ from app.schemas.action_callback import Action, ActionCallback, ExternalActionCa
 from app.schemas.message import TextMessage
 from app.services.utils import build_aiogram_method
 from app.repositories.user import UserRepository
-from app.repositories.llm import LLMRepository
 from app.repositories.crm import CRMRepository
 
 
@@ -22,11 +21,9 @@ class ExternalService:
         self,
         user_repository: Annotated[UserRepository, Depends(UserRepository.init)],
         crm_repository: CRMRepository,
-        llm_repository: LLMRepository,
     ):
         self.user_repository = user_repository
         self.crm_repository = crm_repository
-        self.llm_repository = llm_repository
 
     @classmethod
     def init(

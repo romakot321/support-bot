@@ -15,7 +15,7 @@ class Action(Enum):
     start_chat = dict(action_name="start_chat", screen_name="Оператор")
     support_done = dict(action_name='support_done', screen_name=None)
     support_invalid = dict(action_name='support_invalid', screen_name=None)
-    crm_message = dict(action_name="crm_message", screen_name=None)
+    crm_message = dict(action_name="crm", screen_name=None)
 
     def __init__(self, values):
         self.action_name = values.get('action_name')
@@ -46,10 +46,10 @@ class PaginatedActionCallback(ActionCallback, prefix='paginated_action'):
 
 
 class SupportCategory(Enum):
-    subscription_cancel = "subscription_cancel"
-    technical_issues = "technical_issues"
-    generation_quality = "generation_quality"
     other = "other"
+    payment = "payment"
+    subscription = "subscription"
+    picture = "picture"
 
 
 class SupportActionCallback(PaginatedActionCallback, prefix='support_action'):

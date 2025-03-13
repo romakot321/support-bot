@@ -28,6 +28,7 @@ class User(Base):
     crm_id: M[int | None]
     crm_last_lead_id: M[int | None]
     current_chat_id: M[str | None]
+    current_chat_ref_id: M[str | None]
 
     __table_args__ = (
         UniqueConstraint(

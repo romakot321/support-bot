@@ -39,14 +39,15 @@ async def start_callback(
 
 
 @router.callback_query(
-    ActionCallback.filter(F.action == Action.start_chat.action_name)
+    SupportActionCallback.filter(F.action == Action.start_chat.action_name)
 )
 async def start_chat(
     callback_query: CallbackQuery,
+    callback_data: SupportActionCallback,
     bot: Bot,
     support_service: Annotated[SupportService, Depends(SupportService.init)],
 ):
-    method = await support_service.handle_chat_start(callback_query)
+    method = await support_service.handle_chat_start(callback_query, callback_data)
     await bot(method)
 
 

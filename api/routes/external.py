@@ -14,15 +14,17 @@ AMOCRM_CHANNEL_SECRET = os.getenv("AMOCRM_CHANNEL_SECRET", "").encode()
 async def _authorize_amocrm_webhook(
         request: Request,
 ):
-    signature = hmac.new(AMOCRM_CHANNEL_SECRET.encode(), await request.body(), digestmod=hashlib.sha256).digest()
-    if signature.decode() != request.headers["X-Signature"]:
+    signature = hmac.new(AMOCRM_CHANNEL_SECRET, (await request.body()).strip(), digestmod=hashlib.sha1).hexdigest()
+    if signature != request.headers["X-Signature"]:
         logger.debug(("invalid signature", request.headers, signature))
         raise HTTPException(401)
 
 
-@router.post("/webhook", dependencies=[Depends(_authorize_amocrm_webhook)])
+@router.post("/webhook/{scope_id}", dependencies=[Depends(_authorize_amocrm_webhook)])
 async def handle_webhook(
+    scope_id: str,
     schema: WebhookMessageSchema,
     service: ExternalService = Depends()
 ):
+    logger.info(schema)
     await service.handle(schema)

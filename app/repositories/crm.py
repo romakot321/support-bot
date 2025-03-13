@@ -37,9 +37,9 @@ class CRMPipeline(BaseModel):
 
 
 class CRMStatusId(Enum):
-    subscription_cancel = 74563986
-    technical_issues = 74563990
-    generation_quality = 74563994
+    subscription = 74563986
+    payment = 74563990
+    picture = 74563994
     other = 74563998
     success = 142
 
@@ -80,7 +80,7 @@ class CRMRepository:
         ) as session:
             response = await session.get(path, params=params)
             assert response.status == 200, await response.text()
-            return (await response.json())
+            return await response.json()
 
     async def add_contact(self, name: str, telegram_id: int) -> int:
         resp = await self._post(
@@ -126,48 +126,73 @@ class CRMRepository:
             "Content-Type": "application/json",
             "Date": formatdate(time.mktime(date.timetuple())),
         }
-        signature = "\n".join([request_method.upper()] + list(headers.values())) + "\n" + request_path
+        signature = (
+            "\n".join([request_method.upper()] + list(headers.values()))
+            + "\n"
+            + request_path
+        )
         headers["X-Signature"] = (
-            hmac.new(self.CHANNEL_SECRET, signature.encode(), hashlib.sha1).hexdigest()
-            .lower().rstrip("\n")
+            hmac.new(self.CHANNEL_SECRET, signature.encode(), hashlib.sha1)
+            .hexdigest()
+            .lower()
+            .rstrip("\n")
         )
         return headers
 
-    async def create_chat(self, conversation_id: str, user_id: str, user_name: str) -> dict:
-        body = json.dumps({"conversation_id": conversation_id, "user": {"id": user_id, "name": user_name}})
+    async def create_chat(
+        self, conversation_id: str, user_crm_id: str, user_id: str, user_name: str
+    ) -> dict:
+        body = json.dumps(
+            {
+                "conversation_id": conversation_id,
+                "user": {"id": user_id, "ref_id": user_crm_id, "name": user_name},
+            }
+        )
         path = f"/v2/origin/custom/{self.SCOPE_ID}/chats"
         auth_headers = self._build_chat_auth_headers("POST", path, body.encode())
-        async with aiohttp.ClientSession(base_url="https://amojo.amocrm.ru", headers=auth_headers) as session:
+        async with aiohttp.ClientSession(
+            base_url="https://amojo.amocrm.ru", headers=auth_headers
+        ) as session:
             resp = await session.post(path, data=body)
             assert resp.status == 200, await resp.text()
             return await resp.json()
 
-    async def user_send_message(self, conversation_id: str, user_id: str, user_name: str, message_text: str):
+    async def user_send_message(
+        self,
+        conversation_id: str,
+        conversation_ref_id: str,
+        user_id: str,
+        user_name: str,
+        message_text: str,
+    ):
         data = {
             "event_type": "new_message",
             "payload": {
                 "timestamp": int(time.time()),
                 "msec_timestamp": int(time.time() * 1000),
                 "conversation_id": conversation_id,
+                "conversation_ref_id": conversation_ref_id,
                 "msgid": str(uuid.uuid4()),
                 "sender": {"id": user_id, "name": user_name},
-                "message": {
-                    "type": "text",
-                    "text": message_text
-                }
+                "message": {"type": "text", "text": message_text},
             },
-            "silent": False
+            "silent": True,
         }
-        body = json.dumps(data, indent=2)
+        body = json.dumps(data)
         path = f"/v2/origin/custom/{self.SCOPE_ID}"
         auth_headers = self._build_chat_auth_headers("POST", path, body.encode())
-        async with aiohttp.ClientSession(base_url="https://amojo.amocrm.ru", headers=auth_headers) as session:
+        async with aiohttp.ClientSession(
+            base_url="https://amojo.amocrm.ru", headers=auth_headers
+        ) as session:
             resp = await session.post(path, data=body)
             assert resp.status == 200, await resp.text()
             return await resp.json()
 
     async def attach_chat_contact(self, chat_id: str, contact_id: int):
-        resp = await self._post("/api/v4/contacts/chats", json=[{"chat_id": chat_id, "contact_id": contact_id}])
+        resp = await self._post(
+            "/api/v4/contacts/chats",
+            json=[{"chat_id": chat_id, "contact_id": contact_id}],
+        )
         logger.debug(resp)
 
     async def __get_channel_account_amojo_id(self) -> str:
@@ -176,23 +201,20 @@ class CRMRepository:
 
     async def __connect_account_to_channel(self, channel_id: str):
         account_id = await self.__get_channel_account_amojo_id()
-        body = json.dumps({"account_id": account_id, "hook_api_version": "v2", "title": "PhotoBooth Support"})
-        auth_headers = self._build_chat_auth_headers("POST", f'/v2/origin/custom/{channel_id}/connect', body.encode())
-        async with aiohttp.ClientSession(base_url="https://amojo.amocrm.ru", headers=auth_headers) as session:
-            resp = await session.post(f'/v2/origin/custom/{channel_id}/connect', data=body)
+        body = json.dumps(
+            {
+                "account_id": account_id,
+                "hook_api_version": "v2",
+                "title": "PhotoBooth Support",
+            }
+        )
+        auth_headers = self._build_chat_auth_headers(
+            "POST", f"/v2/origin/custom/{channel_id}/connect", body.encode()
+        )
+        async with aiohttp.ClientSession(
+            base_url="https://amojo.amocrm.ru", headers=auth_headers
+        ) as session:
+            resp = await session.post(
+                f"/v2/origin/custom/{channel_id}/connect", data=body
+            )
             print(await resp.text())
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    async def main():
-        rep = CRMRepository()
-        user_id = "703b82c0-4d0e-4444-8835-9491c6a11309"
-        conv_id = "0fc59c07-6948-4166-8108-96f14fd8cb2f"
-        chat = await rep.create_chat(conv_id, user_id, "Test")
-        print(chat)
-        msg = await rep.user_send_message(conv_id, user_id, "Test", "test message")
-        print(msg)
-
-    print(asyncio.run(main()))

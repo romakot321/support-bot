@@ -9,7 +9,7 @@ from aiogram.methods import EditMessageText
 from aiogram.fsm.context import FSMContext
 
 from app.schemas.texts import other_faq_text
-from app.schemas.action_callback import Action, ActionCallback
+from app.schemas.action_callback import Action, ActionCallback, SupportActionCallback, SupportCategory
 from app.schemas.message import TextMessage
 from app.services.utils import build_aiogram_method
 from app.repositories.user import UserRepository
@@ -47,7 +47,9 @@ class OtherCategoryService:
         )
         builder.button(
             text=Action.start_chat.screen_name,
-            callback_data=ActionCallback(action=Action.start_chat.action_name)
+            callback_data=SupportActionCallback(
+                action=Action.start_chat.action_name, category=SupportCategory.payment
+            ),
         )
         builder.adjust(1)
         return builder.as_markup()
