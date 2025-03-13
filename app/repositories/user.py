@@ -24,7 +24,7 @@ class UserRepository[Table: User, int](BaseRepository):
         return await self.session.scalar(query)
 
     async def update(self, model_id: int, **fields) -> User:
-        return await self._update(model_id, **fields)
+        return await self._update(model_id, none_as_value=True, **fields)
 
     async def delete(self, model_id: int):
         await self._delete(model_id)

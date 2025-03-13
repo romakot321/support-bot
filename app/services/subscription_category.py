@@ -31,7 +31,6 @@ class SubscriptionCategoryService:
         self,
         user_repository: Annotated[UserRepository, Depends(UserRepository.init)],
         crm_repository: CRMRepository,
-        llm_repository: LLMRepository,
     ):
         self.user_repository = user_repository
         self.crm_repository = crm_repository
@@ -43,7 +42,7 @@ class SubscriptionCategoryService:
         return cls(
             user_repository=user_repository,
             crm_repository=CRMRepository(),
-        ))
+        )
 
     @classmethod
     def _build_subscription_confirmation_keyboard(cls) -> types.InlineKeyboardMarkup:
@@ -133,9 +132,10 @@ class SubscriptionCategoryService:
         message = TextMessage(
             text=subscription_cancel_confirmation_text,
             parse_mode="MarkdownV2",
-            reply_markup=self._build_subscription_confirmation_keyboard()
+            reply_markup=self._build_subscription_confirmation_keyboard(),
+            message_id=query.message.message_id
         )
-        return build_aiogram_method(query.from_user.id, message)
+        return build_aiogram_method(query.from_user.id, message, use_edit=True)
 
     async def handle_subscription_cancel(self, query: CallbackQuery):
         await self._create_crm_chat(query)
@@ -177,7 +177,7 @@ class SubscriptionCategoryService:
                     [
                         types.InlineKeyboardButton(
                             text=Action.support_menu.screen_name,
-                            callback_data=ActionCallback(action=Action.support_menu.action_name)
+                            callback_data=ActionCallback(action=Action.support_menu.action_name).pack()
                         )
                     ]
                 ]
