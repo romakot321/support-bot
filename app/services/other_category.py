@@ -42,7 +42,7 @@ class OtherCategoryService:
     def _build_other_keyboard(cls) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         builder.button(
-            text="Спасибо!",
+            text="Спасибо 💚",
             url="https://t.me/fotobudka_ai_bot"
         )
         builder.button(
