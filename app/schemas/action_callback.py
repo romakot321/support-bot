@@ -11,6 +11,7 @@ class Action(Enum):
     other_category = dict(action_name="other_category", screen_name="Другое")
     subscribtion_category = dict(action_name="subscribtion_category", screen_name="Управление подпиской")
     subscription_cancel_confirmation = dict(action_name="subscription_cancel_confirmation", screen_name="Отмена подписки")
+    subscription_cancel = dict(action_name="subscription_cancel", screen_name="Отменить подписку")
     subscription_help = dict(action_name="subscription_help", screen_name="Помощь с подпиской")
     start_chat = dict(action_name="start_chat", screen_name="Оператор")
     support_done = dict(action_name='support_done', screen_name=None)

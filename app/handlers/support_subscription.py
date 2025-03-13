@@ -51,3 +51,27 @@ async def subscription_help_input(
 ):
     method = await category_service.handle_subscription_help_input(message, state)
     await bot(method)
+
+
+@router.callback_query(
+    ActionCallback.filter(F.action == Action.subscription_cancel_confirmation.action_name)
+)
+async def subscription_cancel_confirmation(
+    query: CallbackQuery,
+    bot: Bot,
+    category_service: Annotated[SubscriptionCategoryService, Depends(SubscriptionCategoryService.init)],
+):
+    method = await category_service.handle_subscription_cancel_confirmation(query)
+    await bot(method)
+
+
+@router.callback_query(
+    ActionCallback.filter(F.action == Action.subscription_cancel.action_name)
+)
+async def subscription_cancel(
+    query: CallbackQuery,
+    bot: Bot,
+    category_service: Annotated[SubscriptionCategoryService, Depends(SubscriptionCategoryService.init)],
+):
+    method = await category_service.handle_subscription_cancel(query)
+    await bot(method)
