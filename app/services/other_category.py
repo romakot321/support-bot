@@ -48,7 +48,7 @@ class OtherCategoryService:
         builder.button(
             text=Action.start_chat.screen_name,
             callback_data=SupportActionCallback(
-                action=Action.start_chat.action_name, category=SupportCategory.payment
+                action=Action.start_chat.action_name, category=SupportCategory.other
             ),
         )
         builder.adjust(1)

@@ -1,4 +1,3 @@
-import types
 from typing import Annotated
 from uuid import uuid4
 
@@ -8,7 +7,7 @@ from aiogram3_di import Depends
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import types as am_types
+from aiogram import types as types
 from aiogram.methods import EditMessageText
 
 from app.schemas.action_callback import (
@@ -47,7 +46,7 @@ class SupportService:
         )
 
     @classmethod
-    def _build_support_status_keyboard(cls) -> am_types.InlineKeyboardMarkup:
+    def _build_support_status_keyboard(cls) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         builder.button(
             text=Action.subscribtion_category.screen_name,
@@ -75,7 +74,7 @@ class SupportService:
         return builder.as_markup()
 
     @classmethod
-    def _build_answer_like_markup(cls) -> am_types.InlineKeyboardMarkup:
+    def _build_answer_like_markup(cls) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         builder.button(
             text="Вопрос решен",
@@ -92,7 +91,7 @@ class SupportService:
         return builder.as_markup()
 
     @classmethod
-    def _build_subcription_management_markup(cls) -> am_types.InlineKeyboardMarkup:
+    def _build_subcription_management_markup(cls) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         builder.button(
             text="Отмена подписки",
@@ -177,6 +176,22 @@ class SupportService:
             str(user.crm_id),
             message.from_user.full_name,
             message.text,
+        )
+
+    async def handle_image(self, message: Message, image: types.PhotoSize, file_info):
+        user = await self.user_repository.get_by_telegram_id(message.from_user.id)
+        if user is None or user.current_chat_id is None:
+            return
+        filename = file_info.file_path.split('photos/')[1]
+        await image.download("storage/" + filename)
+        await self.crm_repository.user_send_picture(
+            user.current_chat_id,
+            user.current_chat_ref_id,
+            str(user.crm_id),
+            message.from_user.full_name,
+            message.caption,
+            filename,
+            file_info.file_size
         )
 
     async def handle_subcribe_category_choosed(self, query: CallbackQuery):

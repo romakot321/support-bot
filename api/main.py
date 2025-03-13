@@ -3,6 +3,7 @@ from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings
 from loguru import logger
 # from fastapi_utils.tasks import repeat_every
@@ -79,6 +80,7 @@ def init_web_application():
 
     application.include_router(external_router)
 
+    application.mount("/storage", StaticFiles(directory="storage"), name="storage")
     attach_admin_panel(application)
 
     return application

@@ -50,6 +50,7 @@ class CRMRepository:
     CHANNEL_SECRET = os.getenv("AMOCRM_CHANNEL_SECRET", "").encode()
     SCOPE_ID = os.getenv("AMOCRM_CHANNEL_SCOPE_ID")
     ACCOUNT_AMOJO_ID = os.getenv("AMOCRM_ACCOUNT_AMOJO_ID")
+    STORAGE_URL = os.getenv("STORAGE_URL", "").rstrip("/")
 
     def _load_tokens(self) -> dict | None:
         try:
@@ -175,6 +176,45 @@ class CRMRepository:
                 "msgid": str(uuid.uuid4()),
                 "sender": {"id": user_id, "name": user_name},
                 "message": {"type": "text", "text": message_text},
+            },
+            "silent": True,
+        }
+        body = json.dumps(data)
+        path = f"/v2/origin/custom/{self.SCOPE_ID}"
+        auth_headers = self._build_chat_auth_headers("POST", path, body.encode())
+        async with aiohttp.ClientSession(
+            base_url="https://amojo.amocrm.ru", headers=auth_headers
+        ) as session:
+            resp = await session.post(path, data=body)
+            assert resp.status == 200, await resp.text()
+            return await resp.json()
+
+    async def user_send_picture(
+        self,
+        conversation_id: str,
+        conversation_ref_id: str,
+        user_id: str,
+        user_name: str,
+        message_text: str,
+        filename: str,
+        file_size: int
+    ):
+        data = {
+            "event_type": "new_message",
+            "payload": {
+                "timestamp": int(time.time()),
+                "msec_timestamp": int(time.time() * 1000),
+                "conversation_id": conversation_id,
+                "conversation_ref_id": conversation_ref_id,
+                "msgid": str(uuid.uuid4()),
+                "sender": {"id": user_id, "name": user_name},
+                "message": {
+                    "type": "picture",
+                    "text": message_text,
+                    "media": self.STORAGE_URL + "/" + filename,
+                    "file_name": filename,
+                    "file_size": file_size
+                },
             },
             "silent": True,
         }

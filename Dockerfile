@@ -18,6 +18,7 @@ USER python
 WORKDIR /home/python
 
 RUN mkdir ./wheels
+RUN mkdir -p ./storage
 COPY --from=PackageBuilder ./*.whl ./wheels/
 RUN pip3 install ./wheels/*.whl --no-warn-script-location
 
