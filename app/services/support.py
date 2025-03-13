@@ -105,7 +105,7 @@ class SupportService:
     async def handle_chat_start(self, query: CallbackQuery, callback_data: SupportActionCallback):
         user = await self.user_repository.get_by_telegram_id(query.from_user.id)
         chat_id = str(uuid4())
-        lead = await self.crm_repository.add_lead(user.crm_id, getattr(CRMStatusId, SupportActionCallback.category.value))
+        lead = await self.crm_repository.add_lead(user.crm_id, getattr(CRMStatusId, callback_data.category.value))
         chat = await self.crm_repository.create_chat(chat_id, str(user.crm_id), str(user.id), query.from_user.full_name)
         logger.debug(f"Created {chat=}")
         await self.crm_repository.attach_chat_contact(chat["id"], user.crm_id)

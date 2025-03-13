@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from app.repositories.base import BaseRepository
 from db.tables import User
 
@@ -20,7 +20,7 @@ class UserRepository[Table: User, int](BaseRepository):
         return await self.session.scalar(query)
 
     async def get_by_chat_id(self, chat_id: int) -> User | None:
-        query = select(self.base_table).filter_by(current_chat_id=chat_id)
+        query = select(self.base_table).filter(or_(User.current_chat_id == chat_id, User.current_chat_ref_id == chat_id))
         return await self.session.scalar(query)
 
     async def update(self, model_id: int, **fields) -> User:
