@@ -46,7 +46,10 @@ class PictureCategoryService:
     @classmethod
     def _build_picture_keyboard(cls) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
-        builder.button(text="Спасибо!", url="https://t.me/fotobudka_ai_bot")
+        builder.button(
+            text="Спасибо 💚",
+            url="https://t.me/fotobudka_ai_bot",
+        )
         builder.button(
             text=Action.start_chat.screen_name,
             callback_data=SupportActionCallback(

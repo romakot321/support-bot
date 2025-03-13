@@ -70,39 +70,9 @@ class SupportService:
             text=Action.other_category.screen_name,
             callback_data=ActionCallback(action=Action.other_category.action_name),
         )
-        builder.adjust(1)
-        return builder.as_markup()
-
-    @classmethod
-    def _build_answer_like_markup(cls) -> types.InlineKeyboardMarkup:
-        builder = InlineKeyboardBuilder()
         builder.button(
-            text="Вопрос решен",
-            callback_data=ActionCallback(action=Action.support_done.action_name),
-        )
-        builder.button(
-            text="Ответ не подходит",
-            callback_data=ActionCallback(
-                action=Action.support_invalid.action_name,
-                category=SupportCategory.technical_issues,
-            ),
-        )
-        builder.adjust(1)
-        return builder.as_markup()
-
-    @classmethod
-    def _build_subcription_management_markup(cls) -> types.InlineKeyboardMarkup:
-        builder = InlineKeyboardBuilder()
-        builder.button(
-            text="Отмена подписки",
-            callback_data=ActionCallback(action=Action.support_done.action_name),
-        )
-        builder.button(
-            text="Помощь с подпиской",
-            callback_data=ActionCallback(
-                action=Action.support_invalid.action_name,
-                category=SupportCategory.technical_issues,
-            ),
+            text="Вернуться в Фотобудку 📷",
+            url="https://t.me/fotobudka_ai_bot"
         )
         builder.adjust(1)
         return builder.as_markup()
@@ -197,52 +167,3 @@ class SupportService:
             file_info.file_size
         )
 
-    async def handle_subcribe_category_choosed(self, query: CallbackQuery):
-        message = TextMessage(
-            text="Статус подписки", reply_markup=self._build_support_status_keyboard()
-        )
-        return build_aiogram_method(msg.from_user.id, message)
-
-    async def handle_category_choosed(
-        self, callback_data: SupportActionCallback, query: CallbackQuery
-    ) -> EditMessageText:
-        if callback_data.category == SupportCategory.subscription_cancel:
-            return await self.handle_subcribe_category_choosed(query)
-        status = getattr(CRMStatusId, callback_data.category.value)
-        user = await self.user_repository.get_by_telegram_id(query.from_user.id)
-        lead_id = await self.crm_repository.add_lead(user.crm_id, status)
-        await self.user_repository.update(user.id, crm_last_lead_id=lead_id)
-        message = TextMessage(
-            text="Подробно опишите проблему, для максимально быстрого решения",
-            reply_markup=None,
-            message_id=query.message.message_id,
-        )
-        return build_aiogram_method(query.from_user.id, message, use_edit=True)
-
-    async def answer(self, msg: Message):
-        user = await self.user_repository.get_by_telegram_id(msg.from_user.id)
-        if user.crm_last_lead_id is None:
-            return
-        text = await self.llm_repository.generate(msg.text)
-        message = TextMessage(
-            text=text,
-            reply_markup=self._build_answer_like_markup(),
-        )
-        return build_aiogram_method(msg.from_user.id, message)
-
-    async def handle_success(self, query: CallbackQuery):
-        user = await self.user_repository.get_by_telegram_id(query.from_user.id)
-        await self.crm_repository.update_lead(
-            user.crm_last_lead_id, CRMStatusId.success
-        )
-        message = TextMessage(
-            text="Спасибо за обращение!", message_id=query.message.message_id
-        )
-        return build_aiogram_method(query.from_user.id, message, use_edit=True)
-
-    async def handle_failure(self, query: CallbackQuery):
-        message = TextMessage(
-            text="Пожалуйста, напишите менеджеру: t.me/id1",
-            message_id=query.message.message_id,
-        )
-        return build_aiogram_method(query.from_user.id, message, use_edit=True)
