@@ -93,8 +93,6 @@ class SupportService:
             await self.user_repository.update(
                 user.id,
                 crm_last_lead_id=None,
-                current_chat_id=None,
-                current_chat_ref_id=None,
             )
 
         message = TextMessage(
@@ -117,15 +115,19 @@ class SupportService:
         lead_id = await self.crm_repository.add_lead(
             user.crm_id, getattr(CRMStatusId, callback_data.category.value)
         )
-        chat = await self.crm_repository.create_chat(
-            chat_id, str(user.crm_id), str(user.id), query.from_user.full_name
-        )
-        logger.debug(f"Created {chat=}")
-        await self.crm_repository.attach_chat_contact(chat["id"], user.crm_id)
+        if user.current_chat_id is None:
+            chat = await self.crm_repository.create_chat(
+                chat_id, str(user.crm_id), str(user.id), query.from_user.full_name
+            )
+            logger.debug(f"Created {chat=}")
+            await self.crm_repository.attach_chat_contact(chat["id"], user.crm_id)
+            await self.user_repository.update(
+                user.id,
+                current_chat_id=chat_id,
+                current_chat_ref_id=chat["id"],
+            )
         await self.user_repository.update(
             user.id,
-            current_chat_id=chat_id,
-            current_chat_ref_id=chat["id"],
             crm_last_lead_id=lead_id,
         )
 
@@ -153,7 +155,8 @@ class SupportService:
         if user is None or user.current_chat_id is None:
             return
         filename = file_info.file_path.split('photos/')[1]
-        await image.download("storage/" + filename)
+        print(file_info)
+        await message.bot.download(file=file_info.file_id, destination="storage/" + filename)
         await self.crm_repository.user_send_picture(
             user.current_chat_id,
             user.current_chat_ref_id,

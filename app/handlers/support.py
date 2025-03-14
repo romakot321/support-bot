@@ -52,7 +52,7 @@ async def start_chat(
     await bot(method)
 
 
-@router.message(State(None))
+@router.message(State(None), F.text)
 async def handle_message(
     message: Message,
     bot: Bot,
