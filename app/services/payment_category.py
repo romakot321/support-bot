@@ -52,6 +52,10 @@ class PaymentCategoryService:
                 action=Action.start_chat.action_name, category=SupportCategory.payment
             ),
         )
+        builder.button(
+            text=Action.support_menu.screen_name,
+            callback_data=ActionCallback(action=Action.support_menu.action_name),
+        )
         builder.adjust(1)
         return builder.as_markup()
 

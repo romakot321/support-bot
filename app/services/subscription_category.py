@@ -13,6 +13,8 @@ from aiogram import types as types
 from aiogram.methods import EditMessageText
 from aiogram.fsm.context import FSMContext
 
+from app.repositories.cloudpayments import CloudpaymentsRepository
+from app.repositories.photobooth import PhotoboothRepository
 from app.schemas.subscription import SubscriptionChat
 from app.schemas.texts import (
     subscription_cancel_confirmation_text,
@@ -31,9 +33,13 @@ class SubscriptionCategoryService:
         self,
         user_repository: Annotated[UserRepository, Depends(UserRepository.init)],
         crm_repository: CRMRepository,
+        photobooth_repository: PhotoboothRepository,
+        cloudpayments_repository: CloudpaymentsRepository,
     ):
         self.user_repository = user_repository
         self.crm_repository = crm_repository
+        self.photobooth_repository = photobooth_repository
+        self.cloudpayments_repository = cloudpayments_repository
 
     @classmethod
     def init(
@@ -42,6 +48,8 @@ class SubscriptionCategoryService:
         return cls(
             user_repository=user_repository,
             crm_repository=CRMRepository(),
+            photobooth_repository=PhotoboothRepository(),
+            cloudpayments_repository=CloudpaymentsRepository(),
         )
 
     @classmethod
@@ -49,9 +57,7 @@ class SubscriptionCategoryService:
         builder = InlineKeyboardBuilder()
         builder.button(
             text=Action.subscription_cancel.screen_name,
-            callback_data=ActionCallback(
-                action=Action.subscription_cancel.action_name
-            ),
+            callback_data=ActionCallback(action=Action.subscription_cancel.action_name),
         )
         builder.button(
             text=Action.support_menu.screen_name,
@@ -94,8 +100,11 @@ class SubscriptionCategoryService:
         )
 
     async def handle_menu(self, query: CallbackQuery):
+        user_info = await self.photobooth_repository.get_user(query.from_user.id)
         message = TextMessage(
-            text="Ваша подписка активна/не активна",
+            text="Ваша подписка активна"
+            if user_info.hasSubscription
+            else "Ваша подписка неактивна",
             reply_markup=self._build_subscription_keyboard(),
             message_id=query.message.message_id,
         )
@@ -133,7 +142,7 @@ class SubscriptionCategoryService:
             text=subscription_cancel_confirmation_text,
             parse_mode="MarkdownV2",
             reply_markup=self._build_subscription_confirmation_keyboard(),
-            message_id=query.message.message_id
+            message_id=query.message.message_id,
         )
         return build_aiogram_method(query.from_user.id, message, use_edit=True)
 
@@ -141,46 +150,74 @@ class SubscriptionCategoryService:
         await self._create_crm_chat(query)
         chatid = query.from_user.id
 
+        user_info = await self.photobooth_repository.get_user(chatid)
+        if user_info.subscriptionId is None:
+            message = TextMessage(
+                text="У вас нет активноай подписки",
+                reply_markup=self._build_subscription_keyboard(),
+                message_id=query.message.message_id,
+            )
+            return build_aiogram_method(query.from_user.id, message, use_edit=True)
+
+        await self.cloudpayments_repository.cancel_subscription(
+            user_info.subscriptionId
+        )
+
         message = TextMessage(
             text=subscription_cancel_text,
             parse_mode="MarkdownV2",
+            message_id=query.message.message_id,
             reply_markup=types.InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         types.InlineKeyboardButton(
                             text="10 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy10photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy10photo/1"
+                            ),
                         ),
                         types.InlineKeyboardButton(
                             text="50 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy50photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy50photo/1"
+                            ),
                         ),
                         types.InlineKeyboardButton(
                             text="100 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy100photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy100photo/1"
+                            ),
                         ),
                     ],
                     [
                         types.InlineKeyboardButton(
                             text="300 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy300photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy300photo/1"
+                            ),
                         ),
                         types.InlineKeyboardButton(
                             text="500 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy500photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy500photo/1"
+                            ),
                         ),
                         types.InlineKeyboardButton(
                             text="1000 фото",
-                            web_app=types.WebAppInfo(url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy1000photo/1")
+                            web_app=types.WebAppInfo(
+                                url=f"https://bot.fotobudka.online/api/userPayment/{chatid}/buy1000photo/1"
+                            ),
                         ),
                     ],
                     [
                         types.InlineKeyboardButton(
                             text=Action.support_menu.screen_name,
-                            callback_data=ActionCallback(action=Action.support_menu.action_name).pack()
+                            callback_data=ActionCallback(
+                                action=Action.support_menu.action_name
+                            ).pack(),
                         )
-                    ]
+                    ],
                 ]
-            )
+            ),
         )
-        return build_aiogram_method(query.from_user.id, message)
+        return build_aiogram_method(query.from_user.id, message, use_edit=True)
